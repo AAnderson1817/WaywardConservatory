@@ -1,7 +1,7 @@
 import { paintedScene } from '../shared/paint';
 const games = [
   { id: '01', title: 'Adjacent', art: 'gate', description: 'Find your way through rooms connected by temperature.' },
-  { id: '02', title: 'Ballast', art: 'ballast', description: 'Guide a precious core with the pull of unusual minerals.' },
+  { id: '02', title: 'Ballast', art: 'ballast', description: 'Launch a precious core through fields of attraction and repulsion.' },
   { id: '04', title: 'Borrowed Properties', art: 'borrowed', description: 'Move useful properties from one object to another.' },
   { id: '05', title: 'Heat Shepherd', art: 'herd', description: 'Lead heat-feeding grazers to make a passage over water.' },
   { id: '06', title: 'Pocket Biome', art: 'biome', description: 'Keep a small collection of living equipment in balance.' },

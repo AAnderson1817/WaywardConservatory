@@ -5,9 +5,10 @@ import './games/adjacent/flow.css';
 import './games/ballast/style.css';
 import './shared/paint.css';
 import './shared/field-guide.css';
+import './games/ballast/flight.css';
 import { FieldGuide } from './shared/field-guide';
 import { instrumentAt } from './games/adjacent/model';
-import { BallastScreen } from './games/ballast/screen';
+import { FlightScreen as BallastScreen, flightCompletions } from './games/ballast/flight-screen';
 import { renderArcade } from './hub/view';
 import { AdjacentView } from './games/adjacent/view';
 import { Session, puzzles, rooms, destinations, temperatureNames, won } from './games/adjacent/model';
@@ -56,7 +57,7 @@ function teachAdjacent() {
   adjacentGuide.teach(['a-travel', 'a-return', ...(control ? ['a-dial' as const] : []), ...(control && control.targets.length > 1 ? ['a-linked' as const] : [])]);
 }
 function hub() { view = 'hub'; dialog = null; preview = null; hintOpen = false; suspendAudio(); pauseScenery(false); render('station-02'); }
-function startBallast() { view = 'ballast'; dialog = null; render('b-slot-0'); }
+function startBallast() { view = 'ballast'; dialog = null; render('flight-launch'); }
 function render(focus?: string) {
   const prior = document.activeElement as HTMLElement | null;
   document.documentElement.classList.toggle('arcade-mode', view === 'hub');
@@ -67,9 +68,9 @@ function render(focus?: string) {
     ballastScreen?.dispose(); ballastScreen = null; adjacentView = null;
     modalSlot.innerHTML = ''; lastModal = '';
     headerSlot.innerHTML = view !== 'hub' ? header() : '';
-    if (view === 'hub') contentSlot.innerHTML = renderArcade(stamp(), save.ballastStamp);
+    if (view === 'hub') contentSlot.innerHTML = renderArcade(stamp(), flightCompletions().length === 3);
     else if (view === 'game') adjacentView = new AdjacentView(contentSlot);
-    else ballastScreen = new BallastScreen({ host: contentSlot, frame, modalHost: modalSlot, save: () => save, complete: index => { if (!save.ballastCompleted.includes(index)) { save.ballastCompleted.push(index); if (save.ballastCompleted.length === 12) save.ballastStamp = true; persist(); render(); } }, hub });
+    else ballastScreen = new BallastScreen({ host: contentSlot, frame, modalHost: modalSlot, save: () => save, complete: () => render(), hub });
     mountedView = view;
   }
   if (view !== 'hub') {
