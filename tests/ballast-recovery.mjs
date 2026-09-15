@@ -1,0 +1,28 @@
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+import { writeFile } from 'node:fs/promises';
+const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const url = process.env.WAYWARD_URL || 'http://127.0.0.1:4173';
+const page = await browser.newPage({ viewport: { width: 652, height: 698 } });
+const report = { passed: false, checks: [], errors: [] };
+page.on('pageerror', error => report.errors.push(error.message));
+try {
+  await page.goto(url); await page.locator('#station-02').click();
+  await page.locator('#b-load-east').click(); await page.locator('#b-launch').click();
+  await page.waitForFunction(() => Number(document.querySelector('#b-speed-value').textContent) > 30);
+  await page.keyboard.press('r'); assert.equal(await page.locator('#b-capsule').getAttribute('data-phase'), 'docked'); assert.equal(await page.locator('#b-capsule').getAttribute('transform'), 'translate(135 410)'); assert.equal(await page.locator('#b-launch').isDisabled(), true);
+  report.checks.push('R restarts an active flight with empty sockets and no residual velocity');
+  await page.locator('#b-load-west').click(); await page.locator('#b-launch').click(); await page.locator('#b-retry').waitFor({ timeout: 5000 }); await page.keyboard.press('r');
+  assert.equal(await page.locator('.modal').count(), 0); assert.equal(await page.locator('#b-capsule').getAttribute('data-phase'), 'docked');
+  report.checks.push('R also restarts from a collision result');
+  await page.locator('#b-challenge-2').click(); await page.locator('#b-load-north').click(); await page.locator('#b-slot-1').click(); await page.locator('#b-load-east').click(); await page.locator('#b-launch').click();
+  await page.locator('.b-chamber.release-ready').waitFor({ timeout: 6000 }); await page.keyboard.press('q'); await page.locator('#b-next').waitFor({ timeout: 9000 });
+  await page.screenshot({ path: 'artifacts/ballast-result-settled-652.png', animations: 'disabled' });
+  assert.equal(await page.locator('.b-objective').innerText(), '◇ Core delivered'); assert.match(await page.locator('#b-launch').innerText(), /Delivered/);
+  report.checks.push('Final build completes the release route and communicates its settled result');
+  const blockedContext = await browser.newContext(); await blockedContext.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new Error('Storage blocked'); } }));
+  const blocked = await blockedContext.newPage(); await blocked.goto(url); await blocked.locator('#station-02').click(); assert.equal(await blocked.locator('.storage-warning').count(), 1);
+  await blocked.locator('#b-load-east').click(); await blocked.locator('#b-launch').click(); await blocked.waitForFunction(() => Number(document.querySelector('#b-speed-value').textContent) > 30); await blockedContext.close();
+  report.checks.push('Blocked storage displays the shared warning while Ballast remains playable');
+  assert.deepEqual(report.errors, []); report.passed = true; console.log(JSON.stringify(report));
+} finally { await writeFile('artifacts/ballast-recovery-report.json', JSON.stringify(report, null, 2)); await browser.close(); }

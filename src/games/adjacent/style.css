@@ -1,0 +1,119 @@
+/* The board carries room, route, and instrument information directly. */
+#scenery { background: radial-gradient(ellipse at 70% 20%, #24463f80, transparent 65%), #102e33; }
+#scenery i { position:absolute;width:2px;height:2px;border-radius:50%;background:#d8d4ac;opacity:.13;animation:mote 7s ease-in-out infinite alternate; }
+@keyframes mote { to { opacity:.3;transform:translateY(-8px); } }
+.paused #scenery i,.paused .connections path { animation-play-state:paused; }
+.game-topbar { height:58px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line); }
+.game-topbar nav { display:flex;gap:10px; }
+#header-slot { flex-shrink:0; }
+.motion-off { opacity:.55;text-decoration:line-through; }
+.game-topbar .tool { min-width:34px; }
+.game-view { padding-top:18px; }
+.game-heading { padding-bottom:16px; }
+.game-heading h1 { font-size:34px;margin:0; }
+.game-heading h1 span { padding-left:10px;font-size:19px; }
+.case-progress { display:flex;align-items:center;gap:9px;font:12px Arial;color:#d6d6b1; }
+.case-progress svg { width:24px;height:28px;color:var(--brass); }
+.rule { text-transform:none;letter-spacing:.2px;font-size:11px; }
+.play-area { grid-template-columns:minmax(0,1fr) 255px;gap:24px;padding-top:18px; }
+.room { --room-temperature:#e8c67c;border:1px solid #87998460;border-top:4px solid var(--room-temperature);padding:9px 10px; }
+.room[data-temperature="0"] { --room-temperature:#9bcdd9; }
+.room[data-temperature="2"] { --room-temperature:#eb9c7c; }
+.room.current { border:1px solid #d3b77c;border-top:4px solid var(--room-temperature);padding:9px 10px;box-shadow:0 0 0 2px #d3b77c; }
+.room.reachable { border-color:var(--room-temperature); }
+.room.target { outline:1px dashed #d9b77d;outline-offset:5px; }
+.room.preview-connects { box-shadow:0 0 0 2px #bad3a8; }
+.room.preview-closes { border-bottom:3px solid #cf9179; }
+.room-heading { flex-wrap:nowrap; }
+.room-heading strong { font-size:16px; }
+.room-number { font:12px Arial; }
+.room-art > svg { height:100%;width:100%;max-height:230px; }
+.room-meta { min-height:28px;font-size:9px; }
+.room-state { color:#b9cfb1;min-width:38px; }
+.dial-mark { display:flex;align-items:center;gap:4px;font-size:10px; }
+.target-number { display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1px solid #b4a47c70;border-radius:50%;color:#e1cf9f;font:10px Arial; }
+.dial-setting-symbols { font-size:13px;margin-left:4px; }
+.room.empty .room-art > svg { opacity:.42; }
+.room .target-label { bottom:6px;font-size:10px; }
+.connections .travel-link { stroke:#b8d2b7;stroke-dasharray:none;stroke-width:.22;opacity:.75;animation:none; }
+.connections .control-link { stroke:#d9b77d;stroke-dasharray:.5 .6;stroke-width:.25;opacity:.85;animation:none; }
+.connections .future-link { stroke:#bad3a8;stroke-width:.25;stroke-dasharray:1 .5;opacity:.8;animation:flow 16s linear infinite; }
+.instrument-panel { padding-left:22px;justify-content:center;gap:12px; }
+.instrument-panel h2 { font-size:24px; }
+.instrument-panel .dial-origin { font:11px Arial;color:#a8bfae; }
+.instrument-panel .target-chips { display:flex;flex-wrap:wrap;gap:7px;margin:5px 0; }
+.target-chip { display:flex;gap:5px;align-items:center;font:11px Arial;color:#ded6b9; }
+.instrument-panel .dial-options { margin:7px 0; }
+.instrument-panel .setting { padding:12px 9px; }
+.instrument-panel .preview { min-height:65px;font:11px/1.5 Arial;margin:0; }
+.preview-line { display:block; }
+.preview-line.added { color:#bfdbb1; }
+.preview-line.removed { color:#e0ac95; }
+.instrument-panel .apply { padding:12px 14px;font-size:12px; }
+.quiet-instruction { font:13px/1.7 Arial;color:#b1c6b4;max-width:25ch; }
+.quiet-instruction .gate-symbol { font:52px Georgia;display:block;color:#c3a77390;margin-bottom:16px; }
+.dial-key { font:10px/1.7 Arial;color:#a1b9a7;margin-top:12px; }
+.game-feedback { font-size:12px;min-height:37px; }
+.game-controls > span { font-size:11px; }
+.field-note { width:520px;bottom:65px; }
+.field-note strong { font-size:17px; }
+.field-note .hint-step { display:inline;margin-right:10px;font:11px Arial;color:#496355; }
+.field-note p { font-size:13px; }
+.field-note .hint-more { position:static;display:block;border:1px solid #45604e70;border-radius:3px;padding:7px 10px;margin-top:13px;font:12px Arial;color:#25453c;background:transparent; }
+@media (max-height:780px) and (min-width:851px) {
+  .game-topbar { height:48px; }
+  .game-view { padding-top:14px; }
+  .game-heading { padding-bottom:12px; }
+  .game-heading h1 { font-size:30px; }
+  .play-area { padding-top:14px;grid-template-columns:minmax(0,1fr) 230px;gap:20px; }
+  .instrument-panel { padding-left:18px;gap:9px; }
+  .instrument-panel h2 { font-size:22px; }
+  .room-heading strong { font-size:15px; }
+  .room-art > svg { max-height:200px; }
+}
+@media (max-width:850px) {
+  .app-frame:not(.arcade-frame) { height:100dvh;min-height:600px;padding:0 18px; }
+  .game-topbar { height:42px; }
+  .game-view { min-height:0;padding-top:10px; }
+  .game-heading { padding-bottom:9px;gap:8px; }
+  .game-heading h1 { font-size:24px; }
+  .game-heading h1 span { display:inline;font-size:14px;padding-left:6px; }
+  .case-progress { font-size:10px;gap:5px; }
+  .case-progress svg { width:17px;height:22px; }
+  .challenge-tabs { width:100%;justify-content:space-between;gap:0; }
+  .challenge-tabs button { font-size:10px;padding:9px 7px; }
+  .rule { display:none; }
+  .play-area { display:grid;grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;gap:9px;padding-top:12px; }
+  .room-map { height:auto;min-height:0;gap:18px 14px;padding:3px; }
+  .room,.room.current { padding:6px;border-top-width:3px; }
+  .room-heading { gap:4px; }
+  .room-heading strong { font-size:12px; }
+  .room-number { font-size:10px; }
+  .room .temperature { font-size:8px; }
+  .room .temperature span { font-size:12px; }
+  .room-meta { min-height:22px;padding-top:4px;flex-wrap:nowrap;font-size:8px; }
+  .room-state { min-width:25px; }
+  .dial-mark { gap:3px;font-size:8px; }
+  .target-number { width:15px;height:15px;font-size:8px; }
+  .dial-setting-symbols { font-size:11px;margin-left:2px; }
+  .room-art > svg { max-height:115px; }
+  .room .case-label,.room .target-label { font-size:8px;padding:3px 5px;bottom:2px; }
+  .instrument-panel { border-left:0;border-top:1px solid var(--line);padding:9px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:5px 18px;align-items:center;min-height:109px; }
+  .instrument-panel h2 { font-size:17px;grid-column:1;grid-row:1; }
+  .instrument-panel .dial-origin { grid-column:1;grid-row:2;font-size:10px; }
+  .instrument-panel .target-chips { grid-column:1;grid-row:3;gap:4px 7px;margin:0; }
+  .target-chip { font-size:10px; }
+  .instrument-panel .dial-options { grid-column:2;grid-row:1 / span 2;margin:0; }
+  .instrument-panel .setting { padding:8px;font-size:11px; }
+  .instrument-panel .preview { grid-column:1;grid-row:4;font-size:10px;min-height:24px; }
+  .instrument-panel .apply { grid-column:2;grid-row:3 / span 2;padding:9px;font-size:11px; }
+  .quiet-instruction { grid-column:1 / span 2;max-width:none;font-size:12px; }
+  .quiet-instruction .gate-symbol { display:none; }
+  .dial-key { grid-column:1 / span 2;font-size:10px;margin:0; }
+  .game-feedback { padding:7px 0 6px;min-height:29px;font-size:10px; }
+  .game-controls { height:44px;min-height:44px;flex-wrap:nowrap;padding:0;gap:6px; }
+  .game-controls button { font-size:10px;padding:7px; }
+  .game-controls > span { font-size:9px; }
+  .game-controls kbd { display:none; }
+  .field-note { bottom:52px;width:100%;max-width:100%;padding:16px 38px 16px 18px; }
+}

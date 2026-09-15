@@ -1,0 +1,26 @@
+{
+  "name": "wayward-conservatory",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --experimental-strip-types --test tests/model.test.ts tests/ballast.test.ts tests/ballast-campaign-model.test.ts tests/ballast-campaign-audit.test.ts tests/ballast-campaign-save.test.ts tests/ballast-foundation.test.ts tests/ballast-advanced.test.ts",
+    "test:browser": "node tests/browser.mjs",
+    "test:motion": "node tests/motion.mjs",
+    "test:ballast": "node tests/ballast-browser.mjs",
+    "test:ballast-revision": "node tests/ballast-revision.mjs",
+    "test:ballast-recovery": "node tests/ballast-recovery.mjs",
+    "test:production": "node tests/production.mjs",
+    "test:ballast-campaign": "node tests/ballast-campaign.mjs",
+    "test:ballast-campaign-recovery": "node tests/ballast-campaign-recovery.mjs",
+    "test:ballast-campaign-layout": "node tests/ballast-campaign-layout.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.0"
+  }
+}

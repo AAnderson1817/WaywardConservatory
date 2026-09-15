@@ -1,0 +1,128 @@
+/* State carries meaning; motion follows it without delaying input. */
+.game-topbar { border-color:#b9c5a51c; }
+.game-topbar .tool,.game-topbar .round-tool { transition:background .18s,border-color .18s; }
+.game-topbar .tool { display:grid;place-items:center;padding:7px;width:34px;height:34px; }
+.game-topbar .tool svg { width:18px;height:18px;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round; }
+.sound-cross,.is-muted .sound-waves { display:none; }
+.is-muted .sound-cross { display:block; }
+.game-heading h1 { letter-spacing:-.8px; }
+.game-heading h1 span { letter-spacing:0; }
+.assignment-bar { border-top:0;border-bottom-color:#b9c5a526; }
+.challenge-tabs button { border-radius:6px 6px 0 0;transition:background .2s,color .2s; }
+.challenge-mark { display:inline-grid;place-items:center;width:19px;height:19px;border:1px solid #c3a77345;border-radius:50%; }
+.active .challenge-mark { background:#d0b783;color:#183936;border-color:transparent; }
+.room-map { isolation:isolate; }
+.room,.room.current { border-radius:12px;border-top-width:2px;padding:10px;box-shadow:inset 0 1px 0 #e7edc310,0 5px 15px #041d2428; }
+.room { background:radial-gradient(ellipse at 50% 10%,#48706225,transparent 75%),linear-gradient(165deg,#233f40,#172f34);transition:border-color .3s,background .3s,box-shadow .3s; }
+.room.current { border-color:#e2c48a;background:radial-gradient(ellipse at 35% 30%,#6f86593b,transparent 80%),linear-gradient(155deg,#365947,#234440);box-shadow:0 0 0 1px #e2c48a70,inset 0 0 45px #dcc48409; }
+.room.reachable { background:linear-gradient(165deg,#284940,#1b393a); }
+.room.reachable:hover { border-color:#e6dfb1;box-shadow:0 0 0 1px #e6dfb160,0 0 28px #b6dbae16; }
+.room:not(.current):not(.reachable):hover { background:linear-gradient(165deg,#2b4242,#1b3338); }
+.room.target { outline:1px dashed #c5af7775;outline-offset:4px; }
+.room.preview-connects { box-shadow:0 0 0 2px #bad3a8,0 0 24px #bad3a825; }
+.room.preview-closes { border-bottom:2px solid #b88168; }
+.room-heading,.room-meta { position:relative;z-index:1; }
+.room-number { display:grid;place-items:center;width:20px;height:20px;border:1px solid #a9b9a33b;border-radius:5px;flex-shrink:0;color:#c3c6aa; }
+.current .room-number { background:#dbc28e;color:#1b3935;border-color:transparent; }
+.temperature { transform-origin:right center; }
+.room-art > svg { opacity:.8;transition:opacity .3s,filter .3s; }
+.current .room-art > svg,.reachable:hover .room-art > svg { opacity:1;filter:drop-shadow(0 0 10px #b9c98b15); }
+.room.empty .room-art > svg { opacity:.65; }
+.room.empty .specimen-case { opacity:0; }
+.specimen-case { transition:opacity .25s; }
+.room-meta { border-top-color:#bfccac15; }
+.thermal-wash { position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;background:linear-gradient(0deg,var(--room-temperature),transparent 90%);transform-origin:bottom; }
+.gate-light { pointer-events:none;position:absolute;inset:-1px;border:1px solid var(--room-temperature);border-radius:inherit;box-shadow:inset 0 0 25px color-mix(in srgb,var(--room-temperature) 12%,transparent);opacity:0;transition:opacity .35s; }
+.reachable .gate-light { opacity:.55; }
+.current .gate-light { opacity:0; }
+.keeper-anchor { position:absolute;left:12%;bottom:12%;width:1px;height:1px;pointer-events:none; }
+.effect-lines { position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:3;pointer-events:none; }
+.effect-lines path { fill:none;stroke-width:2;stroke-linecap:round;stroke-dasharray:1;filter:drop-shadow(0 0 5px #cedfa075);opacity:0; }
+.effect-lines .thermal-trail { stroke-width:3; }
+.effect-lines .undo-trail { stroke-width:1.5; }
+.keeper-token { position:absolute;left:0;top:0;margin:-18px 0 0 -18px;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--token-color,#e8c67c);color:#f0e6c9;background:radial-gradient(circle at 50% 25%,#597060,#193b36 80%);box-shadow:0 3px 12px #001815b3,0 0 16px #e0ce8c1a;z-index:5;pointer-events:none;will-change:transform; }
+.keeper-token > svg { width:26px;height:26px; }
+.keeper-case { position:absolute;right:-7px;bottom:-3px;width:17px;height:21px;color:#e3e8b4;filter:drop-shadow(0 0 5px #ccdf93);opacity:0;transition:opacity .2s; }
+.keeper-case svg { width:100%;height:100%;background:#203b36;border-radius:5px; }
+.keeper-token.carrying .keeper-case { opacity:1;transition-delay:.32s; }
+.arrival-ring { position:absolute;left:0;top:0;margin:-22px 0 0 -22px;width:44px;height:44px;border:1px solid currentColor;border-radius:50%;z-index:4;pointer-events:none;opacity:0; }
+.case-flight { position:fixed;left:0;top:0;width:28px;height:32px;color:#f1e7b3;filter:drop-shadow(0 0 12px #d5e5a5);z-index:15;pointer-events:none;opacity:0; }
+.case-flight svg { width:100%;height:100%; }
+.case-progress { position:relative;display:grid;grid-template-columns:24px auto;grid-template-rows:auto 5px;column-gap:9px;row-gap:7px; }
+.case-progress > svg { grid-row:1 / span 2;transition:color .3s,filter .3s; }
+.case-progress[data-stage="return"] > svg,.case-progress[data-stage="home"] > svg { color:#d1dfa8;filter:drop-shadow(0 0 7px #bdcf9545); }
+.journey-track { display:flex;align-items:center;gap:3px;grid-column:2;max-width:110px; }
+.journey-track i { width:5px;height:5px;border:1px solid #a1b99d70;border-radius:50%; }
+.journey-track b { height:1px;flex:1;background:#a1b99d40; }
+.journey-track i:first-child { background:#c9bc89;border-color:#c9bc89; }
+[data-stage="return"] .journey-track i:nth-of-type(2),[data-stage="home"] .journey-track i { background:#caddad;border-color:#caddad; }
+[data-stage="return"] .journey-track b:first-of-type,[data-stage="home"] .journey-track b { background:#caddad; }
+.instrument-panel { border:1px solid #c0b68b30;border-radius:14px;padding:18px;background:radial-gradient(ellipse at 50% 0,#74856b15,transparent 80%),#16333280;gap:10px; }
+.instrument-panel h2 { font-size:23px; }
+.instrument-panel .dial-origin { color:#a9bda8; }
+.dial-face { --dial-angle:0deg;position:relative;width:144px;height:121px;align-self:center;flex-shrink:0;margin:5px 0 0; }
+.dial-face svg { width:140px;height:100px;overflow:visible; }
+.dial-track { stroke:#7f947f55;stroke-width:6;stroke-linecap:round; }
+.dial-ticks { stroke:#c5b88790;stroke-width:1; }
+.dial-face text { font:15px Arial;text-anchor:middle;fill:currentColor; }
+.dial-needle { transform:rotate(var(--dial-angle));transform-origin:70px 86px;transition:transform .38s cubic-bezier(.2,.8,.3,1),opacity .25s;color:#c6d0b1; }
+.dial-needle path { stroke:currentColor;stroke-width:2;stroke-linecap:round; }
+.dial-needle circle { fill:#193632;stroke:currentColor;stroke-width:2; }
+.dial-face[data-temperature="null"] .dial-needle { opacity:.2; }
+.dial-face.pending .dial-needle { color:#ecd39b;filter:drop-shadow(0 0 3px #dfca8b60); }
+.dial-readout { display:block;text-align:center;color:#a4b6a2;font:10px Arial;letter-spacing:.4px; }
+.dial-face.pending .dial-readout { color:#e0c992; }
+.instrument-panel .target-chips { margin:0; }
+.instrument-panel .target-chip { font-size:10px; }
+.instrument-panel .setting { transition:background .2s,border-color .2s,box-shadow .2s; }
+.instrument-panel .setting:hover { border-color:currentColor; }
+.instrument-panel .setting.selected { border-color:currentColor;background:#60785735;box-shadow:inset 0 -2px 0 currentColor; }
+.instrument-panel .preview { min-height:54px; }
+.instrument-panel .apply { transition:background .2s,opacity .2s; }
+.instrument-panel .apply:not(:disabled) { box-shadow:0 3px 0 #0c211f,0 0 20px #c2b37d12; }
+.instrument-panel .apply span { transition:transform .3s; }
+.instrument-panel .apply:not(:disabled):hover span { transform:rotate(90deg); }
+.quiet-instruction .gate-symbol svg { width:54px;height:60px; }
+.game-feedback { color:#a9c0ae;font-size:11px; }
+.modal-backdrop { animation:veil-in .2s ease-out both; }
+.modal { animation:panel-in .3s cubic-bezier(.2,.8,.3,1) both; }
+.result-backdrop .modal { animation-duration:.5s; }
+.modal-emblem.success { position:relative; }
+.modal-emblem.success:before { content:'';position:absolute;inset:-10px 25%;background:radial-gradient(ellipse,#c9dba32b,transparent 70%);border-radius:50%;animation:bloom-in 1s ease-out both; }
+.modal-emblem.success svg { animation:seed-arrive .7s cubic-bezier(.2,.8,.3,1) both; }
+.result-seeds .collected { animation:seed-arrive .7s ease-out both; }
+.result-seeds .collected:nth-child(2) { animation-delay:.1s; }
+.result-seeds .collected:nth-child(3) { animation-delay:.2s; }
+.field-note { animation:panel-in .18s ease-out both; }
+.paused .game-view *,.paused .game-view *:before,.paused .game-view *:after { animation-play-state:paused!important; }
+@keyframes veil-in { from { opacity:0; } to { opacity:1; } }
+@keyframes panel-in { from { opacity:0;transform:translateY(8px); } to { opacity:1;transform:translateY(0); } }
+@keyframes seed-arrive { from { opacity:0;transform:translateY(9px) scale(.93); } to { opacity:1;transform:translateY(0) scale(1); } }
+@keyframes bloom-in { from { opacity:0;transform:scale(.65); } to { opacity:1;transform:scale(1); } }
+@media (max-height:780px) and (min-width:851px) {
+  .instrument-panel { padding:14px;gap:8px; }
+  .instrument-panel h2 { font-size:21px; }
+  .dial-face { width:126px;height:103px;margin:0; }
+  .dial-face svg { width:126px;height:90px; }
+  .dial-readout { font-size:9px; }
+  .instrument-panel .setting { padding:10px 7px; }
+  .instrument-panel .preview { min-height:46px; }
+}
+@media (max-width:850px) {
+  .room,.room.current { padding:6px;border-radius:9px; }
+  .room-number { width:15px;height:17px;font-size:9px;border-radius:3px; }
+  .room-heading { gap:4px; }
+  .room-heading strong { font-size:11px; }
+  .keeper-token { width:28px;height:28px;margin:-14px 0 0 -14px; }
+  .keeper-token > svg { width:22px;height:22px; }
+  .keeper-case { width:14px;height:18px;right:-5px; }
+  .case-progress { grid-template-columns:17px auto;column-gap:5px;row-gap:5px; }
+  .challenge-mark { width:15px;height:15px; }
+  .instrument-panel { padding:9px 12px;border-radius:9px;gap:5px 18px;height:126px;min-height:126px; }
+  .instrument-panel h2 { font-size:17px; }
+  .instrument-panel .dial-face { display:none; }
+  .instrument-panel .preview { min-height:24px; }
+  .quiet-instruction .gate-symbol { display:none; }
+  .instrument-panel .setting { padding:8px; }
+  .game-feedback { font-size:10px; }
+}
