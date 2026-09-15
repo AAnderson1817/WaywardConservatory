@@ -1,9 +1,11 @@
+import { experiencedPlayer, dismissTeaching } from './guide-fixture.mjs';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { writeFile } from 'node:fs/promises';
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const url = process.env.WAYWARD_URL || 'http://127.0.0.1:4173';
 const page = await browser.newPage({ viewport: { width: 652, height: 698 } });
+await experiencedPlayer(page);
 const report = { passed: false, checks: [], errors: [] };
 page.on('pageerror', error => report.errors.push(error.message));
 try {
@@ -21,7 +23,7 @@ try {
   assert.equal(await page.locator('.b-objective').innerText(), '◇ Core delivered'); assert.match(await page.locator('#b-launch').innerText(), /Delivered/);
   report.checks.push('Final build completes the release route and communicates its settled result');
   const blockedContext = await browser.newContext(); await blockedContext.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new Error('Storage blocked'); } }));
-  const blocked = await blockedContext.newPage(); await blocked.goto(url); await blocked.locator('#station-02').click(); assert.equal(await blocked.locator('.storage-warning').count(), 1);
+  const blocked = await blockedContext.newPage(); await blocked.goto(url); await blocked.locator('#station-02').click(); await dismissTeaching(blocked); assert.equal(await blocked.locator('.storage-warning').count(), 1);
   await blocked.locator('#b-load-east').click(); await blocked.locator('#b-launch').click(); await blocked.waitForFunction(() => Number(document.querySelector('#b-speed-value').textContent) > 30); await blockedContext.close();
   report.checks.push('Blocked storage displays the shared warning while Ballast remains playable');
   assert.deepEqual(report.errors, []); report.passed = true; console.log(JSON.stringify(report));

@@ -1,8 +1,8 @@
 import { destinations } from './model';
 import type { State } from './model';
 
-export const keeperIcon = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="10" r="4" fill="currentColor"/><path d="M8 25v-5a8 8 0 0 1 16 0v5M12 25v-6m8 6v-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M18 6q1-5 6-4-1 5-6 4" fill="#a9cdaa"/></svg>';
-export const seedIcon = '<svg viewBox="0 0 24 28" fill="none" aria-hidden="true"><path d="m12 2 9 5v14l-9 5-9-5V7Z" stroke="currentColor" stroke-width="1.5"/><path d="M12 21V9m0 7C5 16 6 10 6 10s6 0 6 6Zm0-2c0-7 6-7 6-7s0 7-6 7Z" stroke="currentColor"/></svg>';
+export const keeperIcon = '<span class="painted-keeper" aria-hidden="true"></span>';
+export const seedIcon = '<span class="painted-case" aria-hidden="true"></span>';
 const colors = ['#9bcdd9', '#e8c67c', '#eb9c7c'];
 type Point = { x: number; y: number };
 const translate = (p: Point) => `translate(${p.x}px, ${p.y}px)`;
@@ -71,7 +71,7 @@ export class AdjacentEffects {
   }
   private flyCase(pickup: boolean) {
     const vault = this.host.querySelector('#room-5 .room-art')!.getBoundingClientRect();
-    const badge = this.host.querySelector('.case-progress > svg')!.getBoundingClientRect();
+    const badge = this.host.querySelector('.case-progress > .painted-case')!.getBoundingClientRect();
     const a = { x: vault.left + vault.width / 2 - 14, y: vault.top + vault.height / 2 - 16 };
     const b = { x: badge.left + badge.width / 2 - 14, y: badge.top + badge.height / 2 - 16 };
     const from = pickup ? a : b, to = pickup ? b : a;

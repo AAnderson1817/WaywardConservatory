@@ -4,11 +4,14 @@ import type { Save } from '../../shared/save';
 import { sound, suspendAudio } from '../../shared/audio';
 import { pauseScenery } from '../../shared/scenery';
 import { emblem } from '../../shared/art';
+import { FieldGuide } from '../../shared/field-guide';
+import type { LessonId } from '../../shared/field-guide';
+import { paintSprite, paintedGem } from '../../shared/paint';
 
 type Options = { host: HTMLElement; frame: HTMLElement; modalHost: HTMLElement; save: () => Save; complete: (index: number) => void; hub: () => void };
-type Dialog = 'pause' | 'help' | 'result' | 'failure' | null;
+type Dialog = 'pause' | 'result' | 'failure' | null;
 const rect = (r: Rect, cls: string) => `<rect class="${cls}" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="4"/>`;
-const mineralArt = (id: Mineral | null) => id ? `<span class="mineral-gem" style="--mineral:${minerals.find(m => m.id === id)!.color}">${minerals.find(m => m.id === id)!.arrow}</span>` : '<span class="empty-socket">＋</span>';
+const mineralArt = (id: Mineral | null) => id ? `<span class="mineral-gem" style="--mineral:${minerals.find(m => m.id === id)!.color}">${paintedGem(id)}<i>${minerals.find(m => m.id === id)!.arrow}</i></span>` : '<span class="empty-socket">＋</span>';
 const path = (points: Vec[]) => points.map((p, i) => `${i ? 'L' : 'M'}${p.x} ${p.y}`).join('');
 const center = (r: Rect) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
 const switchNode = (i: number) => i ? `b-switch-${i}` : 'b-switch';
@@ -32,7 +35,43 @@ export class BallastScreen {
   private trail: { x: number; y: number }[] = [];
   private drawingTick = -1;
   private panelObserver = new ResizeObserver(() => this.positionDialog());
-  constructor(private options: Options) { this.mount(); window.addEventListener('resize', this.positionDialog); this.raf = requestAnimationFrame(this.frame); }
+  private guide: FieldGuide;
+  private guideBlurred = false;
+  constructor(private options: Options) {
+    this.guide = new FieldGuide(open => {
+      this.accumulator = 0; this.previousTime = 0; pauseScenery(open || !!this.dialog);
+      if (open) { suspendAudio(); this.hideTooltip(); }
+      else if (this.guideBlurred && !this.disposed) { this.guideBlurred = false; this.open('pause'); }
+    }, () => this.options.save().reduced);
+    this.mount(); window.addEventListener('resize', this.positionDialog); this.raf = requestAnimationFrame(this.frame);
+    queueMicrotask(() => { if (!this.disposed) this.guide.teach(this.levelLessons()); });
+    options.host.addEventListener('pointerover', this.inspectHover);
+    options.host.addEventListener('pointerout', this.hideTooltip);
+    options.host.addEventListener('focusin', this.inspectHover);
+    options.host.addEventListener('focusout', this.hideTooltip);
+    options.host.addEventListener('click', this.inspectClick);
+  }
+  private levelLessons(): LessonId[] {
+    const c = chambers[this.index], relays = switchesFor(c);
+    return ['b-load', 'b-dock', ...(this.index > 0 ? ['b-combine' as const] : []), ...(this.index >= 2 ? ['b-release' as const, 'b-plan' as const] : []), ...(relays.length ? ['b-relay' as const] : []), ...(relays.some(r => r.requires?.length) ? ['b-order' as const] : []), ...(c.docks.some(d => d.minerals) ? ['b-stock' as const, 'b-recovery' as const] : [])];
+  }
+  private allLessons(): LessonId[] { return ['b-load', 'b-dock', 'b-combine', 'b-release', 'b-relay', 'b-plan', 'b-order', 'b-stock', 'b-recovery']; }
+  private hideTooltip = () => { this.options.host.querySelector('.b-object-tooltip')?.remove(); };
+  private inspectHover = (event: Event) => {
+    const target = (event.target as Element).closest<SVGElement>('[data-b-inspect]');
+    if (!target || this.dialog || this.guide.active) return;
+    this.hideTooltip();
+    const label = target.getAttribute('aria-label') ?? target.querySelector('title')?.textContent ?? '';
+    const tip = document.createElement('div'); tip.className = 'b-object-tooltip'; tip.id = 'b-object-tooltip'; tip.setAttribute('role', 'tooltip'); tip.textContent = `${label} · Select for a visual explanation.`;
+    this.options.host.append(tip);
+    const box = target.getBoundingClientRect();
+    Object.assign(tip.style, { left: `${Math.max(10, Math.min(box.left, innerWidth - tip.offsetWidth - 10))}px`, top: `${Math.max(10, Math.min(box.bottom + 8, innerHeight - tip.offsetHeight - 10))}px` });
+  };
+  private inspectClick = (event: Event) => {
+    const target = (event.target as Element).closest<SVGElement>('[data-b-inspect]');
+    if (!target || this.dialog || this.guide.active) return;
+    this.guide.review(target.dataset.bInspect as LessonId, this.allLessons());
+  };
   private get<T extends Element = HTMLElement>(selector: string) { return this.options.host.querySelector<T>(selector)!; }
   private audio(kind: Parameters<typeof sound>[0]) { sound(kind, this.options.save().muted); }
   private mount() {
@@ -40,24 +79,24 @@ export class BallastScreen {
     this.options.host.innerHTML = `<main class="b-game">
       <div class="b-heading"><h1>Ballast <span>/ ${chamber.title}</span></h1><span class="b-objective">◇ Deliver the core</span></div>
       <div class="b-tabs" aria-label="Choose a level">${chambers.map((c, i) => { const done = this.options.save().ballastCompleted.includes(i); return `<button id="b-challenge-${i}" data-b-challenge="${i}" class="${i === this.index ? 'active' : ''} ${done ? 'completed' : ''}" aria-current="${i === this.index ? 'step' : 'false'}" aria-label="Level ${i + 1}: ${c.title}${done ? ', completed' : ''}" title="${c.title}"><span>${String(i + 1).padStart(2, '0')}</span>${done ? '<i aria-hidden="true">✓</i>' : ''}</button>`; }).join('')}</div>
-      <div class="b-play"><section class="b-chamber" aria-label="Anchor chamber"><svg id="b-world" viewBox="0 0 960 540" role="img" aria-label="Chamber, docks, hazards, capsule and resultant force">
-        <defs><pattern id="b-grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#c3bea1" stroke-opacity=".055"/></pattern><pattern id="b-hatch" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V14" stroke="#cfae79" stroke-opacity=".16" stroke-width="3"/></pattern><marker id="b-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="#e8c67c"/></marker><marker id="b-drift-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0 10 5 0 10" fill="none" stroke="#b4d3ce" stroke-width="2"/></marker></defs>
-        <rect x="24" y="24" width="912" height="492" rx="14" class="b-shell"/><rect x="26" y="26" width="908" height="488" fill="url(#b-grid)"/>
+      <div class="b-play"><section class="b-chamber" aria-label="Anchor chamber"><svg id="b-world" viewBox="0 0 960 540" role="group" aria-label="Chamber, docks, hazards, capsule and resultant force">
+        <defs><pattern id="b-wood" width="150" height="150" patternUnits="userSpaceOnUse"><svg width="150" height="150" viewBox="0 512 512 512" overflow="hidden"><image href="/art/atelier-details.webp" width="1024" height="1024"/></svg></pattern><pattern id="b-bronze" width="100" height="100" patternUnits="userSpaceOnUse"><svg width="100" height="100" viewBox="512 512 512 512" overflow="hidden"><image href="/art/atelier-details.webp" width="1024" height="1024"/></svg></pattern><pattern id="b-grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#c3bea1" stroke-opacity=".055"/></pattern><pattern id="b-hatch" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V14" stroke="#cfae79" stroke-opacity=".16" stroke-width="3"/></pattern><marker id="b-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="#e8c67c"/></marker><marker id="b-drift-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0 10 5 0 10" fill="none" stroke="#b4d3ce" stroke-width="2"/></marker></defs>
+        <image href="/art/ballast-chamber.webp" width="960" height="540" preserveAspectRatio="none"/><rect x="24" y="24" width="912" height="492" rx="14" class="b-shell"/>
         ${[[480, 14, '↑', '#9bcdd9'], [946, 270, '→', '#e8c67c'], [480, 526, '↓', '#eb9c7c'], [14, 270, '←', '#a9c69b']].map(([x, y, a, color]) => `<g transform="translate(${x} ${y})" style="color:${color}"><rect x="-11" y="-11" width="22" height="22" rx="4" class="b-anchor"/><text class="b-wall-arrow" y="5">${a}</text></g>`).join('')}
-        ${chamber.walls.map(w => `<g>${rect(w, 'b-obstacle')}${rect(w, 'b-hatch')}<path d="M${w.x + 10} ${w.y + 9}h${w.w - 20}" class="b-wall-shine"/></g>`).join('')}
+        ${chamber.walls.map(w => `<g tabindex="0" role="button" data-b-inspect="b-dock" aria-label="Solid machinery. Contact stops your flight; use Retry to restore your launch.">${rect(w, 'b-obstacle')}${rect(w, 'b-hatch')}<path d="M${w.x + 10} ${w.y + 9}h${w.w - 20}" class="b-wall-shine"/></g>`).join('')}
         ${chamber.releaseBay ? `${rect(chamber.releaseBay, 'b-release-bay')}<text class="b-bay-label" x="${chamber.releaseBay.x + chamber.releaseBay.w / 2}" y="${chamber.releaseBay.y + chamber.releaseBay.h + 21}">RELEASE ↑</text>` : ''}
         ${this.circuitArt()}
-        ${chamber.docks.map((d, i) => `<g class="b-dock${d.exit ? ' exit' : ''}" id="b-dock-${i}" transform="translate(${d.x} ${d.y})"><circle r="${d.r}" class="b-dock-field"/><circle r="${d.r - 8}" class="b-dock-ring"/><path d="M-12 0H12M0-12V12" class="b-dock-cross"/>${this.dockLabel(i)}${d.minerals ? `<g class="b-dock-supply">${d.minerals.map((id, j) => { const m = minerals.find(m => m.id === id)!; return `<text x="${(j - (d.minerals!.length - 1) / 2) * 19}" y="5" style="fill:${m.color}">${m.arrow}</text>`; }).join('')}</g>` : ''}${d.exit ? '<path class="b-core-glyph" d="m0-17 14 8v18L0 17-14 9V-9Z"/>' : ''}</g>`).join('')}
+        ${chamber.docks.map((d, i) => `<g class="b-dock${d.exit ? ' exit' : ''}" id="b-dock-${i}" transform="translate(${d.x} ${d.y})" tabindex="0" role="button" data-b-inspect="${d.minerals ? 'b-stock' : 'b-dock'}" aria-label="${d.name}. ${d.exit ? 'Deliver the core here after powering all required relays.' : d.minerals ? `Stocks ${d.minerals.map(id => minerals.find(m => m.id === id)!.name).join(', ')}. Carried minerals can stay. Return visits have the same stock.` : 'Enter to stop and refit with any mineral.'}">${paintSprite('dock', -d.r / .7, -d.r / .7, d.r * 2 / .7)}<circle r="${d.r}" class="b-dock-field"/><circle r="${d.r - 8}" class="b-dock-ring"/><path d="M-12 0H12M0-12V12" class="b-dock-cross"/>${this.dockLabel(i)}${d.minerals ? `<g class="b-dock-supply"><rect x="${-Math.max(54, d.minerals.length * 32 + 10) / 2}" y="-13" width="${Math.max(54, d.minerals.length * 32 + 10)}" height="26" rx="5"/>${d.minerals.map((id, j) => { const m = minerals.find(m => m.id === id)!; return `<g transform="translate(${(j - (d.minerals!.length - 1) / 2) * 32} 0)">${paintSprite(id, -21, -15, 30)}<text x="10" y="5" style="fill:${m.color}">${m.arrow}</text></g>`; }).join('')}</g>` : ''}${d.exit ? '<path class="b-core-glyph" d="M0 16V-6M0 6C-14 6-14-9-14-9S0-9 0 6Zm0-5C0-14 14-14 14-14S14 1 0 1Z"/>' : ''}</g>`).join('')}
         <path id="b-forecast"/><circle id="b-forecast-end" r="6"/><path id="b-trail"/><g id="b-pieces"></g>
         <g id="b-preview" visibility="hidden"><path id="b-preview-core"/><path id="b-preview-piece"/><circle id="b-preview-core-end" r="17"/><path id="b-preview-piece-end" d="m0-9 7 4v10L0 9-7 5V-5Z"/></g>
-        <g id="b-capsule"><circle class="b-core-halo" r="26"/><ellipse rx="17" ry="17" class="b-capsule-body"/><path d="m0-11 7 5v12L0 11-7 6V-6Z" class="b-core"/><circle id="b-pod-0" cx="-13" cy="0" r="5"/><circle id="b-pod-1" cx="13" cy="0" r="5"/></g>
+        <g id="b-capsule"><circle class="b-core-halo" r="26"/>${paintSprite('core', -24, -24, 48)}<circle r="17" class="b-collision-rim"/><circle id="b-pod-0" cx="-13" cy="0" r="5"/><circle id="b-pod-1" cx="13" cy="0" r="5"/></g>
         <line id="b-pull" marker-end="url(#b-arrow)"/><line id="b-drift" marker-end="url(#b-drift-arrow)"/>
         <g id="b-impact" visibility="hidden"><circle r="13"/><path d="m-6-6 12 12m0-12L-6 6"/></g>
       </svg><div class="b-board-status" id="b-board-status" aria-live="polite"></div></section>
       <aside class="b-panel" aria-label="Ballast controls"><div class="b-panel-heading"><h2 id="b-mode">At the dock</h2><span id="b-dock-name"></span></div>
         <div class="b-force"><span>Resultant pull</span><strong id="b-force-icon">—</strong><small id="b-force-name">No pull</small></div>
         <div class="b-sockets">${[0, 1].map(i => `<button id="b-slot-${i}" data-b-slot="${i}" aria-label="Socket ${i + 1}"><span class="b-slot-label">${i ? 'B' : 'A'} <kbd>${i ? 'E' : 'Q'}</kbd></span><span class="b-slot-content"></span><span class="b-slot-action"></span></button>`).join('')}</div>
-        <div class="b-loading"><div class="b-minerals" aria-label="Choose a mineral">${minerals.map(m => `<button id="b-load-${m.id}" data-b-load="${m.id}">${mineralArt(m.id)}<span>${m.name}</span></button>`).join('')}</div><button class="text-button" id="b-empty" data-b-empty="true">Empty selected socket</button></div>
+        <div class="b-loading"><div class="b-minerals" aria-label="Choose a mineral">${minerals.map(m => `<button id="b-load-${m.id}" data-b-load="${m.id}" title="${m.name} pulls ${m.id === 'north' ? 'up' : m.id === 'east' ? 'right' : m.id === 'south' ? 'down' : 'left'}. Load into the selected socket.">${mineralArt(m.id)}<span>${m.name}</span></button>`).join('')}</div><button class="text-button" id="b-empty" data-b-empty="true">Empty selected socket</button></div>
         <div class="b-speed"><span>Drift</span><div><i id="b-speed-fill"></i></div><span id="b-speed-value">0</span></div>
         <button id="b-launch" class="primary" data-b-action="launch">Launch <kbd>Space</kbd></button>
         <div class="b-flight-note"><span class="b-flight-glyph">Ⅱ</span><span>Pause to compare release paths.</span></div><p class="b-lesson">${chamber.lesson}</p>
@@ -86,19 +125,19 @@ export class BallastScreen {
       const p = center(relay.rect), m = minerals.find(m => m.id === relay.mineral)!;
       const label = `${letter(relay.id)} ${m.arrow}`;
       const prerequisiteX = relay.rect.y < 60 && Math.abs(p.x - 480) < 65 ? p.x + 70 : p.x;
-      return `<g id="${switchNode(i)}" data-relay="${relay.id}" class="b-relay" style="--relay-color:${m.color}"><title>Relay ${letter(relay.id)}: ${m.name}${relay.requires?.length ? `, power ${relay.requires.map(letter).join(' and ')} first` : ''}</title>${rect(relay.rect, 'b-plate')}<text x="${p.x}" y="${p.y + 4}" class="b-switch-symbol">${label}</text>${relay.requires?.length ? `<text x="${prerequisiteX}" y="${Math.max(17, relay.rect.y - 7)}" class="b-prerequisite">${relay.requires.map(letter).join(' + ')} → ${letter(relay.id)}</text>` : ''}</g>`;
+      return `<g id="${switchNode(i)}" data-relay="${relay.id}" class="b-relay" tabindex="0" role="button" data-b-inspect="${relay.requires?.length ? 'b-order' : 'b-relay'}" style="--relay-color:${m.color}"><title>Relay ${letter(relay.id)}: ${m.name}${relay.requires?.length ? `, power ${relay.requires.map(letter).join(' and ')} first` : ''}</title>${rect(relay.rect, 'b-plate')}<text x="${p.x}" y="${p.y + 4}" class="b-switch-symbol">${label}</text>${relay.requires?.length ? `<text x="${prerequisiteX}" y="${Math.max(17, relay.rect.y - 7)}" class="b-prerequisite">${relay.requires.map(letter).join(' + ')} → ${letter(relay.id)}</text>` : ''}</g>`;
     }).join('')}${gates.map((gate, i) => {
       const p = center(gate.rect), vertical = gate.rect.h > gate.rect.w;
       const seam = vertical ? `M${p.x} ${gate.rect.y + 8}V${gate.rect.y + gate.rect.h - 8}` : `M${gate.rect.x + 8} ${p.y}H${gate.rect.x + gate.rect.w - 8}`;
       const badge = Math.max(30, 12 + gate.requires.length * 15);
-      return `<g id="${gateNode(i)}" class="b-barrier" data-barrier="${gate.id}"><title>Gate: power ${gate.requires.map(letter).join(' and ')}</title>${rect(gate.rect, 'b-gate-panel')}<path d="${seam}" class="b-gate-seam"/><g class="b-gate-label" transform="translate(${p.x} ${p.y})"><rect x="${-badge / 2}" y="-12" width="${badge}" height="24" rx="4"/><text y="4">${gate.requires.map(letter).join('·')}</text></g></g>`;
+      return `<g id="${gateNode(i)}" class="b-barrier" data-barrier="${gate.id}" tabindex="0" role="button" data-b-inspect="b-relay" style="--gate-slide:${vertical ? gate.rect.h + 2 : gate.rect.w + 2}px;--gate-x:${vertical ? 0 : -(gate.rect.w + 2)}px;--gate-y:${vertical ? -(gate.rect.h + 2) : 0}px"><title>Gate: power ${gate.requires.map(letter).join(' and ')}</title><defs><clipPath id="gate-clip-${i}">${rect(gate.rect, 'b-gate-clip')}</clipPath></defs>${rect(gate.rect, 'b-gate-track')}<g clip-path="url(#gate-clip-${i})"><g class="b-gate-shutter">${rect(gate.rect, 'b-gate-panel')}<path d="${seam}" class="b-gate-seam"/></g></g><g class="b-gate-label" transform="translate(${p.x} ${p.y})"><rect x="${-badge / 2}" y="-12" width="${badge}" height="24" rx="4"/><text y="4">${gate.requires.map(letter).join('·')}</text></g></g>`;
     }).join('')}`;
   }
   private frame = (now: number) => {
     if (this.disposed) return;
     const elapsed = this.previousTime ? Math.min((now - this.previousTime) / 1000, .1) : 0;
     this.previousTime = now;
-    if (!this.dialog) {
+    if (!this.dialog && !this.guide.active) {
       this.accumulator += elapsed;
       while (this.accumulator >= WORLD.dt) {
         const before = this.game.state;
@@ -111,7 +150,7 @@ export class BallastScreen {
           for (const relay of fresh) this.pulse(`#${switchNode(relays.indexOf(relay))}`, '#d5edb4');
         }
         if (before.phase !== after.phase) {
-          if (after.phase === 'docked') { this.notice = 'Dock secured. Refit for the next leg.'; this.audio('travel'); this.selected = 0; this.pulse(`#b-dock-${after.dock}`, '#e8d6a2'); }
+          if (after.phase === 'docked') { this.notice = 'Dock secured. Refit for the next leg.'; this.audio('travel'); this.selected = 0; this.pulse(`#b-dock-${after.dock}`, '#e8d6a2'); this.update(); this.guide.teach(['b-recovery']); break; }
           if (after.phase === 'crashed') { this.audio('undo'); this.open('failure'); break; }
           if (after.phase === 'won') { this.options.complete(this.index); this.audio('win'); this.open('result'); break; }
         }
@@ -159,7 +198,7 @@ export class BallastScreen {
     for (const node of pieces.querySelectorAll<SVGGElement>('[data-piece]')) if (!s.pieces.some(p => String(p.id) === node.dataset.piece)) node.remove();
     for (const p of s.pieces) {
       let node = pieces.querySelector<SVGGElement>(`[data-piece="${p.id}"]`);
-      if (!node) { const m = minerals.find(m => m.id === p.mineral)!; pieces.insertAdjacentHTML('beforeend', `<g data-piece="${p.id}" class="b-piece" style="color:${m.color}"><path d="m0-9 7 4v10L0 9-7 5V-5Z"/><text y="4">${m.arrow}</text></g>`); node = pieces.lastElementChild as SVGGElement; }
+      if (!node) { const m = minerals.find(m => m.id === p.mineral)!; pieces.insertAdjacentHTML('beforeend', `<g data-piece="${p.id}" class="b-piece" style="color:${m.color}">${paintSprite(p.mineral, -15, -15, 30)}<text x="13" y="4">${m.arrow}</text></g>`); node = pieces.lastElementChild as SVGGElement; }
       node.setAttribute('transform', `translate(${p.x} ${p.y})`); node.style.opacity = String(p.resting ? Math.max(0, 1 - p.age / 2) : 1);
     }
     this.get<HTMLElement>('#b-speed-fill').style.width = `${Math.hypot(s.vx, s.vy) / WORLD.maxSpeed * 100}%`;
@@ -176,9 +215,10 @@ export class BallastScreen {
       const active = s.activated.includes(relay.id), locked = !active && !!relay.requires?.some(id => !s.activated.includes(id));
       this.get(`#${switchNode(i)}`).classList.toggle('active', active);
       this.get(`#${switchNode(i)}`).classList.toggle('locked', locked);
+      this.get(`#${switchNode(i)}`).setAttribute('aria-label', `Relay ${String.fromCharCode(65 + i)}. Accepts ${minerals.find(m => m.id === relay.mineral)!.name}. ${active ? 'Powered.' : locked ? 'Locked: power its prerequisite relays first, then deliver a fresh mineral.' : 'Ready for a released mineral.'}`);
       for (const wire of this.options.host.querySelectorAll(`[data-wire="${i}"]`)) wire.classList.toggle('active', active);
     });
-    gatesFor(c).forEach((gate, i) => this.get(`#${gateNode(i)}`).classList.toggle('open', gateIsOpen(gate, s)));
+    gatesFor(c).forEach((gate, i) => { const node = this.get(`#${gateNode(i)}`); node.classList.toggle('open', gateIsOpen(gate, s)); node.setAttribute('aria-label', `Gate ${gate.requires.map(id => String.fromCharCode(65 + relays.findIndex(r => r.id === id))).join(' + ')}. ${gateIsOpen(gate, s) ? 'Open; safe to pass.' : 'Closed; power all of its lettered relays to open it.'}`); });
     this.get('#b-world').setAttribute('aria-label', `Level ${this.index + 1}. ${c.title}. ${relays.map((r, i) => `Relay ${String.fromCharCode(65 + i)} ${r.mineral}: ${s.activated.includes(r.id) ? 'powered' : r.requires?.some(id => !s.activated.includes(id)) ? 'waiting for prerequisite relays' : 'ready'}`).join('. ')}`);
     this.get('#b-force-icon').textContent = f.x === 0 && f.y === 0 ? '—' : f.x === 0 ? f.y < 0 ? '↑' : '↓' : f.y === 0 ? f.x < 0 ? '←' : '→' : f.x > 0 ? f.y > 0 ? '↘' : '↗' : f.y > 0 ? '↙' : '↖';
     this.get('#b-force-name').textContent = !f.x && !f.y ? 'No pull' : `${f.y ? f.y < 0 ? 'North' : 'South' : ''}${f.y && f.x ? ' + ' : ''}${f.x ? f.x < 0 ? 'West' : 'East' : ''}${Math.abs(f.x) === 2 || Math.abs(f.y) === 2 ? ' × 2' : ''}`;
@@ -219,7 +259,7 @@ export class BallastScreen {
     this.get('#b-hint-slot').innerHTML = this.hint ? `<section class="b-hint" aria-label="Hint ${level + 1} of 3"><span class="b-hint-level">${['A question', 'A closer look', 'The route'][level]} · ${level + 1} / 3</span><p>${chambers[this.index].hints[level]}</p><button id="b-hint-close" data-b-action="hint" aria-label="Close hint">×</button>${level < 2 ? `<button id="b-hint-next" data-b-action="hint-next">${level === 0 ? 'A closer clue →' : 'Show the route →'}</button>` : ''}</section>` : '';
   }
   private act(action: Action) {
-    if (this.dialog) return;
+    if (this.dialog || this.guide.active) return;
     if (this.game.act(action)) {
       if (action.type === 'load') { this.audio('dial'); this.notice = 'Dotted line previews this loadout. Refit only at docks.'; }
       if (action.type === 'launch') { this.audio('travel'); this.notice = 'Q / E releases ballast. Esc pauses to plan.'; this.trail = [{ x: this.game.state.x, y: this.game.state.y }]; this.drawingTick = this.game.state.ticks; this.accumulator = 0; }
@@ -228,6 +268,7 @@ export class BallastScreen {
     }
   }
   handleButton(button: HTMLButtonElement) {
+    if (this.guide.active) return;
     if (button.dataset.bPreview !== undefined && this.dialog === 'pause') { this.showRelease(Number(button.dataset.bPreview)); return; }
     if (button.dataset.bChallenge !== undefined && !this.dialog) { this.start(Number(button.dataset.bChallenge)); return; }
     if (button.dataset.bSlot !== undefined) { const slot = Number(button.dataset.bSlot); if (this.game.state.phase === 'docked') { this.selected = slot; this.update(); } else this.act({ type: 'eject', slot }); return; }
@@ -235,7 +276,7 @@ export class BallastScreen {
     if (button.dataset.bEmpty) { this.act({ type: 'load', slot: this.selected, mineral: null }); return; }
     const action = button.dataset.bAction ?? button.dataset.action;
     if (action === 'pause') this.open('pause');
-    if (action === 'help') this.open('help');
+    if (action === 'help') this.guide.library(this.allLessons());
     if (action === 'resume' || action === 'close') this.close();
     if (action === 'release' && this.dialog === 'pause' && this.previewSlot !== null) { const slot = this.previewSlot; this.close(); this.act({ type: 'eject', slot }); }
     if (action === 'launch') this.act({ type: 'launch' });
@@ -253,14 +294,14 @@ export class BallastScreen {
   }
   private start(index: number) {
     if (!chambers[index]) return;
-    this.close(); this.index = index; this.game = new BallastSession(chambers[index]); this.selected = 0; this.hint = false; this.notice = 'Choose a mineral, then launch.'; this.trail = []; this.drawingTick = -1; this.accumulator = 0; this.mount(); this.get<HTMLElement>('#b-slot-0').focus();
+    this.close(); this.index = index; this.game = new BallastSession(chambers[index]); this.selected = 0; this.hint = false; this.notice = 'Choose a mineral, then launch.'; this.trail = []; this.drawingTick = -1; this.accumulator = 0; this.mount(); this.get<HTMLElement>('#b-slot-0').focus(); this.guide.teach(this.levelLessons());
   }
   private open(dialog: Dialog) {
     if (this.dialog) return;
-    this.dialog = dialog; this.restoreFocus = (document.activeElement as HTMLElement)?.id ?? ''; this.options.frame.inert = true; pauseScenery(true); if (dialog === 'pause' || dialog === 'help') suspendAudio();
+    this.dialog = dialog; this.restoreFocus = (document.activeElement as HTMLElement)?.id ?? ''; this.options.frame.inert = true; pauseScenery(true); if (dialog === 'pause') suspendAudio();
     if (dialog === 'pause' || dialog === 'failure') { this.contextDialog(dialog); this.update(); return; }
     const completed = this.options.save().ballastCompleted.length, mastered = completed === chambers.length;
-    const content = dialog === 'help' ? `<div class="eyebrow">THE ANCHOR CHAMBER</div><h2 id="b-dialog-title">Your load is your steering.</h2><div class="help-steps"><p><b>Refit.</b> Choose a socket, then a mineral. Arrows inside a dock show its stock; carried minerals can stay loaded.</p><p><b>Read the pull.</b> Gold shows force and strength. Pale dashed drift turns gradually. There are no thrusters.</p><p><b>Plan a release.</b> Esc pauses. Compare A or B: solid is the core, dashed is the mineral. Release & resume commits the choice.</p><p><b>Power the relays.</b> Match the mineral arrow. A → B means A must be lit first. Gate letters show which relays open them; the receiver needs every required relay.</p></div><p class="help-small">Q / E selects at docks or ejects in flight · Arrow keys load<br>Space launches · Z retries / resets a refit · R restarts</p><button id="b-close-help" class="primary" data-b-action="close">Understood ↗</button>` : `<div class="modal-emblem success">${emblem}</div><div class="eyebrow">${mastered ? 'ALL TWELVE CORES DELIVERED' : `LEVEL ${this.index + 1} COMPLETE`}</div><h2 id="b-dialog-title">${mastered ? 'The chamber is alive.' : 'A steady arrival.'}</h2><p>${mastered ? 'Every circuit is powered. Your fieldkeeper stamp is earned.' : `${completed} / ${chambers.length} cores delivered.`}</p><div class="result-seeds b-result-levels">${chambers.map((_, i) => `<span class="${this.options.save().ballastCompleted.includes(i) ? 'collected' : ''}">${String(i + 1).padStart(2, '0')} ${this.options.save().ballastCompleted.includes(i) ? '✓' : '◇'}</span>`).join('')}</div><button id="b-next" class="primary" data-b-action="next">${this.index < chambers.length - 1 ? 'Next level ↗' : 'Return to arcade ↗'}</button><button class="text-button" data-b-action="restart">Replay level</button>`;
+    const content = `<div class="modal-emblem success">${emblem}</div><div class="eyebrow">${mastered ? 'ALL TWELVE CORES DELIVERED' : `LEVEL ${this.index + 1} COMPLETE`}</div><h2 id="b-dialog-title">${mastered ? 'The chamber is alive.' : 'A steady arrival.'}</h2><p>${mastered ? 'Every circuit is powered. Your fieldkeeper stamp is earned.' : `${completed} / ${chambers.length} cores delivered.`}</p><div class="result-seeds b-result-levels">${chambers.map((_, i) => `<span class="${this.options.save().ballastCompleted.includes(i) ? 'collected' : ''}">${String(i + 1).padStart(2, '0')} ${this.options.save().ballastCompleted.includes(i) ? '✓' : '◇'}</span>`).join('')}</div><button id="b-next" class="primary" data-b-action="next">${this.index < chambers.length - 1 ? 'Next level ↗' : 'Return to arcade ↗'}</button><button class="text-button" data-b-action="restart">Replay level</button>`;
     this.options.modalHost.innerHTML = `<div class="modal-backdrop${dialog === 'result' ? ' result-backdrop' : ''}"><section class="modal b-modal" role="dialog" aria-modal="true" aria-labelledby="b-dialog-title">${content}<button class="text-button" data-b-action="hub">← Arcade</button></section></div>`;
     this.options.modalHost.querySelector<HTMLElement>('button')?.focus({ preventScroll: true });
   }
@@ -308,15 +349,17 @@ export class BallastScreen {
     this.accumulator = 0; this.previousTime = 0; pauseScenery(false); this.update();
     if (this.restoreFocus) { const target = document.getElementById(this.restoreFocus) as HTMLButtonElement | null; (target && !target.disabled ? target : this.get<HTMLElement>('#b-pause'))?.focus({ preventScroll: true }); }
   }
-  pause() { if (!this.dialog) this.open('pause'); }
+  pause() { if (this.guide.active) { this.guideBlurred = true; return; } if (!this.dialog) this.open('pause'); }
   handleKey(event: KeyboardEvent) {
+    if (this.guide.active) return;
+    if ((event.key === 'Enter' || event.code === 'Space') && (event.target as Element).closest('[data-b-inspect]')) { event.preventDefault(); this.inspectClick(event); return; }
     if (event.key === 'Tab' && this.dialog) {
       const buttons = [...this.options.modalHost.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')], first = buttons[0], last = buttons.at(-1);
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
     }
     if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
-    if (event.key === 'Escape') { event.preventDefault(); if (this.dialog === 'pause' || this.dialog === 'help') this.close(); else if (!this.dialog) this.open('pause'); return; }
+    if (event.key === 'Escape') { event.preventDefault(); if (this.dialog === 'pause') this.close(); else if (!this.dialog) this.open('pause'); return; }
     if (this.dialog) {
       if (this.dialog === 'failure' && event.key.toLowerCase() === 'r') { event.preventDefault(); this.start(this.index); }
       else if ((this.dialog === 'failure' || this.dialog === 'pause') && event.key.toLowerCase() === 'z') { event.preventDefault(); this.retry(); }
@@ -333,6 +376,6 @@ export class BallastScreen {
     if (arrows[event.key]) { event.preventDefault(); this.act({ type: 'load', slot: this.selected, mineral: arrows[event.key] }); }
   }
   preferencesChanged() { if (this.options.save().reduced) for (const animation of this.options.host.getAnimations({ subtree: true })) animation.cancel(); this.update(); }
-  inspect() { return { index: this.index, state: structuredClone(this.game.state), checkpoint: structuredClone(this.game.checkpoint), arrival: structuredClone(this.game.arrival), canGoBack: this.game.canGoBack(), dialog: this.dialog, selected: this.selected, previewSlot: this.previewSlot, hintLevel: this.hintLevels[this.index] }; }
-  dispose() { this.disposed = true; cancelAnimationFrame(this.raf); this.panelObserver.disconnect(); window.removeEventListener('resize', this.positionDialog); this.options.modalHost.innerHTML = ''; this.options.frame.inert = false; pauseScenery(false); suspendAudio(); }
+  inspect() { return { index: this.index, state: structuredClone(this.game.state), checkpoint: structuredClone(this.game.checkpoint), arrival: structuredClone(this.game.arrival), canGoBack: this.game.canGoBack(), dialog: this.dialog, guide: this.guide.active, selected: this.selected, previewSlot: this.previewSlot, hintLevel: this.hintLevels[this.index] }; }
+  dispose() { this.disposed = true; this.guide.dispose(); this.hideTooltip(); this.options.host.removeEventListener('pointerover', this.inspectHover); this.options.host.removeEventListener('pointerout', this.hideTooltip); this.options.host.removeEventListener('focusin', this.inspectHover); this.options.host.removeEventListener('focusout', this.hideTooltip); this.options.host.removeEventListener('click', this.inspectClick); cancelAnimationFrame(this.raf); this.panelObserver.disconnect(); window.removeEventListener('resize', this.positionDialog); this.options.modalHost.innerHTML = ''; this.options.frame.inert = false; pauseScenery(false); suspendAudio(); }
 }
