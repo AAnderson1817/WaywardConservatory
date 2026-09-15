@@ -2,22 +2,20 @@
 
 Active milestone: **2 — Ballast**
 
-State: **awaiting_review**
+State: **awaiting_playtest**
 
 | Assignment | State |
 | --- | --- |
-| Adjacent | Gameplay approved; illustrated teaching revision ready for review |
-| Ballast | Twelve-level campaign and illustrated teaching ready for review |
+| Adjacent | Approved gameplay and illustrated teaching preserved |
+| Ballast | Three-course spatial physics prototype ready for playtest |
 | Borrowed Properties | Queued |
 | Heat Shepherd | Queued |
 | Pocket Biome | Queued |
 
-The user explicitly authorized the current art and contextual tutorial work across the game ecosystem and requested a professional result. The five-game menu keeps only the arcade title, game titles, and one-sentence descriptions. No later game has been implemented.
+The user approved prototyping the revised Ballast vision: aimed minigolf-style launches, floating bodies with color-dependent attraction and repulsion, optional mineral shielding during flight, immediate retries, and multiple solutions. The flight garden replaces the directional campaign in the arcade. Prior campaign source and saves remain available for recovery.
 
-Current delivery adds a consistent painted botanical art direction, thirteen first-encounter visual lessons, a replayable field guide, inspectable chamber objects, animated gate retraction, keyboard focus handling, and static reduced-motion demonstrations. Existing physics, puzzle layouts, completion saves, and recovery controls remain in place.
+Current controls include drag-to-launch, keyboard-accessible angle/power sliders, four cargo choices, shutter and launch-and-watch modes, last-shot trails, short previews, gentle receiver capture, five first-use illustrated lessons, replayable help, and pause/focus recovery. Three courses have verified alternate approaches; the Confluence shutter route succeeds where the same unshielded launch fails.
 
-All 47 model tests pass. The browser completed all twelve Ballast levels and all three Adjacent puzzles. Tutorial, motion, cargo recovery, collision/storage, and 48 campaign layout checks pass. See [PLAYTESTS.md](PLAYTESTS.md) for the current evidence and [ART_DIRECTION.md](ART_DIRECTION.md) for image provenance.
+Local source: `C:\Users\Derpd\Projects\WaywardConservatory`. GitHub: AAnderson1817/WaywardConservatory. No OneDrive storage and no public deployment. Test evidence is recorded in [PLAYTESTS.md](PLAYTESTS.md).
 
-Work is stored in the local checkout outside OneDrive and versioned in AAnderson1817/WaywardConservatory on GitHub. The local production preview is http://127.0.0.1:4173/ while running. Rebuild and test commands are in [README.md](README.md).
-
-Next step: user playtest and review, especially whether the first relay and first restricted refit are understandable without using a solution hint. Adjacent’s deferred dead-end design remains a later gameplay decision. Do not start another game without explicit approval; no public deployment is authorized.
+Next: user playtest of the core feel and comparison of the two modes before expanding the campaign. Adjacent's deferred dead-end design remains a later decision. Do not implement another game without explicit approval.

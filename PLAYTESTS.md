@@ -1,3 +1,22 @@
+# Current revision — Ballast flight garden (2026-09-15)
+
+Three-course spatial physics prototype replacing the directional campaign in the arcade. The earlier campaign evidence below is historical and does not validate this new interface.
+
+- **63 model/save/design tests pass:** 47 retained regressions and 16 new flight tests. New checks cover radial force direction, mixed responses, smooth field rims, bounded speed, deterministic stepping, shutter momentum and release, collisions, gentle capture, finite flight recovery, real previews, alternate complete solutions, and the empty-cargo baffles.
+- **Production build passes:** TypeScript plus Vite. JavaScript 76.18 kB / 25.64 kB gzip; CSS 84.05 kB / 19.77 kB gzip. Painted assets reused locally; no dependencies added.
+- **21 flight browser checks pass** on the development build. Drag/keyboard launch, native slider input, keyboard/pointer shutter, retry trail/settings, held-input reset, pause/resume, first-use visual lessons, early Ironroot introduction, course prerequisites, persistent completion/mode, blocked storage, and Adjacent travel/undo are covered.
+- **9 course/layout combinations** checked across 1280×720, 652×698, and 390×844. Desktop and narrow app view fit vertically; phone controls have no horizontal clipping. Wide courses retain their proportions and letterbox in portrait view. Tutorial cards and controls fit 1280×720, 652×698, 390×844, and 740×390.
+- **All three Ballast courses complete in production** through visible controls, with fresh tutorials, next-course progression, receiver result, and saved stamp/lessons/mode after reload. The production inspector is absent. No console, runtime, or asset errors.
+- **All three approved Adjacent puzzles complete in production**, including persisted restoration. No changes to Adjacent gameplay.
+
+The final visual pass aligned the core art to its collider, corrected tutorial paths to avoid solid bodies, synchronized shutter feedback after retry, and clipped field effects to the playable arena. Existing art is painted raster with precise vector overlays for readable physics.
+
+Model fixtures establish at least three approaches per course. Confluence also has a Blue -2°/68 shutter shot: shield at 1.3 s to reach the receiver in 3.392 s; the same unshielded shot fails. Numerical scans over 151 angles × 76 powers found no zero-bounce Empty win on Cushion or Confluence; this is sampled evidence, not an exhaustive continuous-control proof.
+
+Evidence stays local under ignored artifacts/: ballast-flight-browser-report.json, ballast-flight-production-report.json, production-report.json, and ballast-flight-*.png. Reproduce with the commands in README.md. Browser checks used installed Edge headless; focus-loss recovery exercises the actual blur handler with a synthetic event. Native touch hardware, Safari, Firefox, and a manual screen-reader session were not tested. User playtesting is still required to judge feel, difficulty, and the preferred mode.
+
+---
+
 # Illustrated teaching revision — 2026-09-15
 
 The user approved a professional art and tutorial revision for the arcade, Ballast, and Adjacent. The complete twelve-level campaign and all three Adjacent puzzles remain playable. Future games remain locked.
