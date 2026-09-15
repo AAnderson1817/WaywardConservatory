@@ -1,3 +1,4 @@
+import { experiencedPlayer } from './guide-fixture.mjs';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { writeFile } from 'node:fs/promises';
@@ -10,6 +11,7 @@ await context.addInitScript(() => {
   if (!localStorage.getItem('wayward-conservatory-v1')) localStorage.setItem('wayward-conservatory-v1', JSON.stringify({ version: 1, muted: true, reduced: false, completed: [0, 1, 2], ballastCompleted: [0, 1, 2] }));
 });
 const page = await context.newPage();
+await experiencedPlayer(page);
 const report = { url, passed: false, checks: [], layouts: [], errors: [] };
 page.on('pageerror', e => report.errors.push(e.message));
 page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
@@ -30,7 +32,7 @@ const win = () => page.locator('#b-next').waitFor({ timeout: 18000 });
 const pullLength = () => page.locator('#b-pull').evaluate(e => Math.hypot(Number(e.getAttribute('x2')) - Number(e.getAttribute('x1')), Number(e.getAttribute('y2')) - Number(e.getAttribute('y1'))));
 const preview = async () => ({ core: await page.locator('#b-preview-core').getAttribute('d'), piece: await page.locator('#b-preview-piece').getAttribute('d') });
 async function focusContained() {
-  for (let i = 0; i < 10; i++) { await page.keyboard.press('Tab'); assert.equal(await page.evaluate(() => !!document.activeElement?.closest('.modal')), true); }
+  for (let i = 0; i < 10; i++) { await page.keyboard.press('Tab'); assert.equal(await page.evaluate(() => !!document.activeElement?.closest('.field-guide[open]')), true); }
   for (let i = 0; i < 10; i++) { await page.keyboard.press('Shift+Tab'); assert.equal(await page.evaluate(() => !!document.activeElement?.closest('.modal')), true); }
 }
 async function compactLayout(label) {

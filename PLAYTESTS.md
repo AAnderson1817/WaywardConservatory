@@ -1,3 +1,40 @@
+# Illustrated teaching revision — 2026-09-15
+
+The user approved a professional art and tutorial revision for the arcade, Ballast, and Adjacent. The complete twelve-level campaign and all three Adjacent puzzles remain playable. Future games remain locked.
+
+## Presentation and teaching
+
+- Five illustrated arcade covers; six painted Adjacent rooms; a movable fieldkeeper portrait and seedcase; textured Ballast machinery, translucent minerals, brass core and docks. Raster artwork is versioned locally and loaded without external requests.
+- Thirteen replayable visual lessons: nine Ballast interactions and four Adjacent interactions. First encounters highlight their actual object/control, explain one rule, and show an example. Only unmet lessons appear when changing levels, including an out-of-order jump to level 12.
+- Ballast teaches loading, capture/receivers, combined pulls, release and drift, relays/gates, planning previews, prerequisite order, limited stock, and recovery. Adjacent teaches temperature travel, thermostats, coupled targets, and the return journey; dial teaching waits until a dial is encountered.
+- The question-mark button opens the illustrated field guide. Ballast docks, machinery, relays, and gates expose hover/focus descriptions; Enter or a click opens the relevant demonstration.
+- Flight, loose minerals, and relay progression stop while reading. Closing the guide resumes without accumulated time. A focus-loss event while reading keeps the game paused until explicit resume. Native modal isolation is complemented by a Tab loop.
+- Closing, skipping, or acknowledging introductions records them in a separate tutorial key. History is merged across both games; earned game progress uses the existing save format. Reduced motion shows static before/after states with an explicit button.
+
+## Verified in this revision
+
+| Check | Result |
+| --- | --- |
+| Model/save/design tests | 47 passed; puzzle definitions and physics unchanged |
+| First-encounter tutorial suite | 12 scenarios passed |
+| Ballast campaign | All 12 levels; 43 launches and 37 releases through actual controls; progress persists |
+| Ballast layouts | 48 level/viewport combinations; no clipped or overlapping labels |
+| Adjacent interaction regression | 21 checks and 45 layout observations passed |
+| Adjacent motion regression | 8 animation lifecycle checks passed |
+| Adjacent production | All three puzzles completed; development inspector absent |
+| Ballast recovery | Four cargo/history scenarios and four collision/storage scenarios passed |
+| Production build | TypeScript and Vite passed |
+
+Final tutorial checks include actual keyboard/pointer input, focus containment, independent history persistence, all nine Ballast lessons at 652×698, guide cards at 1280×720, 652×698, 390×844, and 740×390, and static reduced-motion examples. The focus-loss handler case dispatches a blur event; the Adjacent regression separately uses real Tab navigation into browser chrome.
+
+Visual review used captured hub, tutorial, room, chamber, and campaign screenshots. Room/cover crops preserve the painted proportions. Core collision boundaries stay separate from the artwork, gates retract within their actual collider, and stock remains labeled by mineral direction. Current evidence is generated under ignored `artifacts/`; it is not source-controlled. All image prompts and integration details are in [ART_DIRECTION.md](ART_DIRECTION.md).
+
+Artwork payload is 2.59 MB total, 83% smaller than the original PNG outputs, with transparency retained. The final JavaScript build is approximately 31 KB gzip. There are no new runtime dependencies.
+
+Review remains a human playtest of clarity and pacing. Automated route completion does not establish that first-time players understand a mechanic. Browser verification is Edge/Chromium on Windows; full gameplay layout targets the existing laptop/narrow-window sizes. Short windows keep guide controls reachable but may require scrolling the game. This revision does not change Adjacent’s deferred dead-end design, and it does not publish a public site.
+
+---
+
 > Recovery note (2026-09-15): source and tests have been recovered; prior screenshots and JSON reports were missing. The records below describe earlier verified runs. See RECOVERY.md for current verification.
 
 # Current Ballast campaign — twelve levels

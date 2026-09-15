@@ -1,3 +1,4 @@
+import { experiencedPlayer } from './guide-fixture.mjs';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { writeFile } from 'node:fs/promises';
@@ -5,6 +6,7 @@ import { writeFile } from 'node:fs/promises';
 const url = process.env.WAYWARD_URL || 'http://127.0.0.1:4173';
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+await experiencedPlayer(page);
 const report = { url, passed: false, layouts: [], observations: [], screenshots: [], errors: [] };
 page.on('pageerror', e => report.errors.push(e.message));
 page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });

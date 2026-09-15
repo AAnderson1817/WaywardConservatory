@@ -1,5 +1,4 @@
-import { illustration } from '../shared/art';
-
+import { paintedScene } from '../shared/paint';
 const games = [
   { id: '01', title: 'Adjacent', art: 'gate', description: 'Find your way through rooms connected by temperature.' },
   { id: '02', title: 'Ballast', art: 'ballast', description: 'Guide a precious core with the pull of unusual minerals.' },
@@ -21,7 +20,7 @@ export function renderArcade(restored: boolean, ballastRestored = false) {
         aria-label="${game.title}${index > 1 ? ', not yet available' : ''}"
         aria-describedby="description-${game.id}" ${index > 1 ? 'aria-disabled="true"' : ''}>
         <div class="arcade-art">
-          ${illustration(game.art, index === 0 && restored || index === 1 && ballastRestored)}
+          ${paintedScene('arcade-covers', index, 'arcade-cover')}
           <span class="arcade-availability">${index > 1 ? lock : play}</span>
         </div>
         <h2>${game.title}</h2>

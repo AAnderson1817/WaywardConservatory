@@ -1,3 +1,4 @@
+import { experiencedPlayer } from './guide-fixture.mjs';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { writeFile } from 'node:fs/promises';
@@ -12,6 +13,7 @@ const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
 await context.addInitScript(() => { if (!localStorage.getItem('wayward-conservatory-v1')) localStorage.setItem('wayward-conservatory-v1', JSON.stringify({ version: 1, ballastEdition: 2, ballastStamp: false, completed: [0, 1, 2], ballastCompleted: [], muted: true, reduced: false })); });
 const page = await context.newPage();
+await experiencedPlayer(page);
 const report = { url, passed: false, levels: [], layouts: [], checks: [], errors: [] };
 page.on('pageerror', e => report.errors.push(e.message));
 page.on('console', e => { if (e.type() === 'error') report.errors.push(e.text()); });

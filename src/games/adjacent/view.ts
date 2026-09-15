@@ -1,12 +1,12 @@
+import { paintedScene } from '../../shared/paint';
 import { destinations, temperatureNames, instrumentAt, transition, rooms, puzzles } from './model';
 import type { Session, Temperature } from './model';
-import { illustration, symbols } from '../../shared/art';
+import { symbols } from '../../shared/art';
 import type { Save } from '../../shared/save';
 import { AdjacentEffects, seedIcon } from './effects';
 
 export type ViewContext = { game: Session; save: Save; puzzleIndex: number; preview: Temperature | null; notice: string; hintOpen: boolean; hintLevel: number; paused: boolean };
 const boardOrder = [0, 3, 5, 1, 4, 2];
-const art = ['gate', 'moss', 'boiler', 'glass', 'relay', 'vault'];
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 const badge = (t: number) => `<span aria-hidden="true">${symbols[t]}</span> ${temperatureNames[t]}`;
 const dialFace = `<div class="dial-face" aria-hidden="true"><svg viewBox="0 0 140 100" fill="none"><path class="dial-track" d="M22 78a55 55 0 0 1 96 0"/><path class="dial-ticks" d="m28 63-7-4m23-18-4-7m30-1v-9m26 17 4-7m12 29 7-4"/><g class="dial-needle"><path d="M70 89V41"/><circle cx="70" cy="86" r="6"/></g><text x="14" y="94" class="temp-0">${symbols[0]}</text><text x="70" y="18" class="temp-1">${symbols[1]}</text><text x="126" y="94" class="temp-2">${symbols[2]}</text></svg><span class="dial-readout"></span></div>`;
@@ -25,7 +25,7 @@ export class AdjacentView {
     host.innerHTML = `<main class="game-view">
       <div class="game-heading"><h1>Adjacent <span id="puzzle-title"></span></h1><div class="case-progress">${seedIcon}<span id="case-progress" aria-live="polite"></span><span class="journey-track" aria-hidden="true"><i></i><b></b><i></i><b></b><i></i></span></div></div>
       <div class="assignment-bar"><div class="challenge-tabs" aria-label="Choose a challenge">${puzzles.map((p, i) => `<button id="challenge-${i}" data-challenge="${i}" aria-label="Challenge ${i + 1}: ${p.title}"><span class="challenge-mark"></span>${['Matching rooms', 'Coupled dials', 'Prepare the return'][i]}</button>`).join('')}</div><span class="rule">Same temperature. Connected rooms.</span></div>
-      <div class="play-area"><section class="room-map" aria-label="Six rooms of the thermal gatehouse"><svg class="connections" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>${boardOrder.map(r => `<button class="room" id="room-${r}" data-room="${r}"><span class="thermal-wash" aria-hidden="true"></span><span class="gate-light" aria-hidden="true"></span><div class="room-heading"><span class="room-number">${r + 1}</span><strong>${rooms[r]}</strong><span class="temperature"></span></div><div class="room-art">${illustration(art[r])}<span class="keeper-anchor" aria-hidden="true"></span><span class="case-label" hidden></span><span class="target-label" hidden></span></div><div class="room-meta"><span class="room-state"></span><span class="dial-mark"></span></div></button>`).join('')}</section><aside class="instrument-panel" aria-label="Current room instrument"></aside></div>
+      <div class="play-area"><section class="room-map" aria-label="Six rooms of the thermal gatehouse"><svg class="connections" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>${boardOrder.map(r => `<button class="room" id="room-${r}" data-room="${r}"><span class="thermal-wash" aria-hidden="true"></span><span class="gate-light" aria-hidden="true"></span><div class="room-heading"><span class="room-number">${r + 1}</span><strong>${rooms[r]}</strong><span class="temperature"></span></div><div class="room-art">${paintedScene('adjacent-rooms', r, 'room-paint')}${r === 5 ? '<span class="specimen-case painted-case" aria-hidden="true"></span>' : ''}<span class="keeper-anchor" aria-hidden="true"></span><span class="case-label" hidden></span><span class="target-label" hidden></span></div><div class="room-meta"><span class="room-state"></span><span class="dial-mark"></span></div></button>`).join('')}</section><aside class="instrument-panel" aria-label="Current room instrument"></aside></div>
       <div class="game-feedback" role="status"></div>
       <footer class="game-controls"><div><button data-action="undo" id="undo">↶ Undo <kbd>Z</kbd></button><button data-action="restart" id="restart">↻ Restart <kbd>R</kbd></button><button data-action="pause" id="pause">Ⅱ Pause <kbd>Esc</kbd></button><button data-action="hint" id="hint" aria-expanded="false">? Hint</button></div><span><span id="action-count"></span> actions <i>·</i> Rooms <kbd>1–6</kbd></span></footer>
       <div id="hint-slot"></div>

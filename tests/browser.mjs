@@ -1,3 +1,4 @@
+import { experiencedPlayer, dismissTeaching } from './guide-fixture.mjs';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -6,6 +7,7 @@ const url = process.env.WAYWARD_URL || 'http://127.0.0.1:5173';
 const browser = await chromium.launch({ channel: process.env.WAYWARD_BROWSER || 'msedge', headless: true });
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
 const page = await context.newPage();
+await experiencedPlayer(page);
 const failures = [], report = { url, started: new Date().toISOString(), checks: [], solutions: [], layouts: [] };
 page.on('pageerror', e => failures.push(e.message));
 page.on('console', m => { if (m.type() === 'error') failures.push(m.text()); });
@@ -153,8 +155,8 @@ try {
   await page.locator('#help').click(); await layout('help-1280'); await screenshot('help-1280');
   await page.setViewportSize({ width: 652, height: 698 }); await layout('help-652'); await screenshot('help-652');
   await page.setViewportSize({ width: 1280, height: 720 });
-  for (let i = 0; i < 7; i++) { await page.keyboard.press('Tab'); assert.ok(await page.evaluate(() => !!document.activeElement?.closest('.modal'))); }
-  await page.locator('#close-help').click(); check('Instructions, hint, and modal keyboard focus');
+  for (let i = 0; i < 7; i++) { await page.keyboard.press('Tab'); assert.ok(await page.evaluate(() => !!document.activeElement?.closest('.field-guide[open]'))); }
+  await page.locator('.field-guide[open] .guide-close').click(); check('Instructions, hint, and modal keyboard focus');
   await page.locator('#mute').click(); await page.locator('#motion').click();
   assert.equal((await inspect()).save.muted, true); assert.equal((await inspect()).save.reduced, true);
   assert.equal(await page.locator('html.reduced').count(), 1);
@@ -169,7 +171,7 @@ try {
   const corruptContext = await browser.newContext(); await corruptContext.addInitScript(() => localStorage.setItem('wayward-conservatory-v1', '{bad json'));
   const corrupt = await corruptContext.newPage(); await corrupt.goto(url); await corrupt.locator('#station-01').click(); assert.equal(await corrupt.locator('.room').count(), 6); await corruptContext.close(); check('Malformed save falls back to playable defaults');
   const blockedContext = await browser.newContext(); await blockedContext.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new Error('Storage blocked'); } }));
-  const blocked = await blockedContext.newPage(); await blocked.goto(url); await blocked.locator('#station-01').click(); assert.equal(await blocked.locator('.storage-warning').count(), 1); await blocked.locator('#room-1').click(); await blocked.locator('#setting-2').click(); await blocked.locator('#apply').click(); assert.match(await blocked.locator('#room-1').getAttribute('aria-label'), /Hot/); await blockedContext.close(); check('Unavailable storage leaves game playable with an honest notice');
+  const blocked = await blockedContext.newPage(); await blocked.goto(url); await blocked.locator('#station-01').click(); await dismissTeaching(blocked); assert.equal(await blocked.locator('.storage-warning').count(), 1); await blocked.locator('#room-1').click(); await dismissTeaching(blocked); await blocked.locator('#setting-2').click(); await blocked.locator('#apply').click(); assert.match(await blocked.locator('#room-1').getAttribute('aria-label'), /Hot/); await blockedContext.close(); check('Unavailable storage leaves game playable with an honest notice');
   report.finished = new Date().toISOString(); report.errors = failures; report.passed = true;
 } catch (error) { report.passed = false; report.error = error.stack; await screenshot('browser-failure'); throw error; }
 finally { await writeFile('artifacts/browser-report.json', JSON.stringify(report, null, 2)); await browser.close(); }

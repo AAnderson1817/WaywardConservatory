@@ -16,7 +16,8 @@
     "test:production": "node tests/production.mjs",
     "test:ballast-campaign": "node tests/ballast-campaign.mjs",
     "test:ballast-campaign-recovery": "node tests/ballast-campaign-recovery.mjs",
-    "test:ballast-campaign-layout": "node tests/ballast-campaign-layout.mjs"
+    "test:ballast-campaign-layout": "node tests/ballast-campaign-layout.mjs",
+    "test:field-guide": "node tests/field-guide.mjs"
   },
   "devDependencies": {
     "playwright": "1.62.1",

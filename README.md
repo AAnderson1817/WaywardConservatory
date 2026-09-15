@@ -123,3 +123,11 @@ In a development build, `window.__WAYWARD__.inspect()` returns a copy of the act
 Adjacent is approved; Ballast is awaiting review. Borrowed Properties, Heat Shepherd, and Pocket Biome have illustrated choices with lock icons and disabled launches. Their implementations require later review approvals. No public deployment is included.
 
 The arcade menu displays only its title, the five game titles, and one-sentence descriptions. Click Adjacent or Ballast to play; Left/Right arrows or Tab move between choices. Sound and motion controls are available inside the games.
+
+## Illustrated field guide
+
+The question-mark control opens replayable visual lessons. New mechanics are introduced once, with a highlighted object and a short example; closing or skipping records the introduction. Ballast machinery, docks, relays, and gates can also be inspected by pointer or keyboard. The guide pauses the current puzzle. Reduced motion uses a button to compare static before/after examples.
+
+Run `pnpm test:field-guide` against the production preview to verify fresh teaching, game isolation, focus, independent history, out-of-order levels, and compact layouts. Older gameplay suites initialize experienced-player tutorial history; the dedicated suite tests fresh onboarding.
+
+Art assets and the exact built-in ImageGen prompts are documented in [ART_DIRECTION.md](ART_DIRECTION.md). Current verification is recorded at the top of [PLAYTESTS.md](PLAYTESTS.md).

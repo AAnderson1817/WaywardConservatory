@@ -1,3 +1,4 @@
+import { experiencedPlayer } from './guide-fixture.mjs';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { writeFile } from 'node:fs/promises';
@@ -8,6 +9,7 @@ const browser = await chromium.launch({ channel: process.env.WAYWARD_BROWSER || 
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
 await context.addInitScript(() => { if (!localStorage.getItem('wayward-conservatory-v1')) localStorage.setItem('wayward-conservatory-v1', JSON.stringify({ version: 1, muted: false, reduced: false, completed: [0, 1, 2] })); });
 const page = await context.newPage();
+await experiencedPlayer(page);
 const report = { url, passed: false, checks: [], layouts: [], solutions: [], errors: [] };
 page.on('pageerror', e => report.errors.push(e.message));
 page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
@@ -50,8 +52,8 @@ try {
   pass('Ballast launches from the simple arcade with four minerals, two empty sockets, and existing Adjacent progress preserved');
   for (const [width, height] of [[1280, 720], [1366, 768], [1920, 1080], [652, 698]]) { await page.setViewportSize({ width, height }); await layout(`chamber-1-${width}`); }
   await page.locator('#help').click(); await layout('help-652'); await page.screenshot({ path: 'artifacts/ballast-help-652.png' });
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Tab'); assert.equal(await page.evaluate(() => !!document.activeElement?.closest('.modal')), true); }
-  await page.locator('#b-close-help').click();
+  for (let i = 0; i < 6; i++) { await page.keyboard.press('Tab'); assert.equal(await page.evaluate(() => !!document.activeElement?.closest('.field-guide[open]')), true); }
+  await page.locator('.field-guide[open] .guide-close').click();
   await page.locator('#b-hint').click(); assert.equal(await page.locator('.b-hint').count(), 1); await layout('hint-652'); await page.locator('#b-hint-close').click();
   await page.setViewportSize({ width: 1280, height: 720 });
   pass('Desktop and narrow layouts fit; help, hints, and modal keyboard focus work');
